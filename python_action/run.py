@@ -231,7 +231,6 @@ def post_results():
     index = 0
     while 0 <= index < len(annotations):
         data["output"] = annotations[index:50]
-        index += 50
         check_run_id, method = (0, "POST")
         if 100 > index >= 50:
             data["check_run_id"] = check_run_id
@@ -244,6 +243,7 @@ def post_results():
             headers=API_HEADERS,
             data=data,
         )
+        index += 50
         json_response = json.loads(Globals.response_buffer.text)
         if "id" in json_response.keys():
             check_run_id = json_response["id"]

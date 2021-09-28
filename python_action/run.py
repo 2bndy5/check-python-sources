@@ -232,11 +232,13 @@ def post_results():
         data["output"] = annotations[index:50]
         index += 50
         check_run_id = 0
+        if index >= 50:
+            data["check_run_id"] = check_run_id
         Globals.response_buffer = requests.request(
             method="POST" if index < 50 else "PATCH",
             url=base_url + ("" if index < 50 else str(check_run_id)),
             headers=API_HEADERS,
-            data=data + ({} if index < 50 else {"check_run_id": check_run_id}),
+            data=data,
         )
         json_response = json.loads(Globals.response_buffer.text)
         if "id" in json_response.keys():

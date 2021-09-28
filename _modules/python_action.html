@@ -726,7 +726,8 @@
     <span class="sd">&quot;&quot;&quot;Output the response buffer&#39;s message on failed request.</span>
 
 <span class="sd">    :param bool override: Force this function to always output the body of the</span>
-<span class="sd">        :attr:`~Globals.response_buffer` (even if response&#39;s status code is less than 400).</span>
+<span class="sd">        :attr:`~Globals.response_buffer` (even if response&#39;s status code is less than</span>
+<span class="sd">        400).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">Globals</span><span class="o">.</span><span class="n">response_buffer</span><span class="o">.</span><span class="n">status_code</span> <span class="o">&gt;=</span> <span class="mi">400</span> <span class="ow">or</span> <span class="n">override</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>

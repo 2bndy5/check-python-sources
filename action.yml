@@ -1,0 +1,37 @@
+name: C/C++ Lint Action
+description: Automatically checks push & pull request changes with clang-format & clang-tidy, then posts a comment with faulty results.
+author: shenxianpeng
+branding:
+  icon: 'check-circle'
+  color: 'green'
+inputs:
+  extensions:
+    description: >
+      The file extensions to run the action against.
+      This comma-separated string defaults to 'py,pyi'.
+    required: false
+    default: "py,pyi"
+  repo-root:
+    description: >
+      The relative path to the repository root directory. The default value '.' is relative to the runner's GITHUB_WORKSPACE environment variable.
+    required: false
+    default: '.'
+  verbosity:
+    descruption: A hidden option to control the action's log verbosity. This is the `logging` level (degaults to DEBUG)
+    required: false
+    default: '10'
+  diff-only:
+    description: Set this option to 'true' to only analyse changes in the event's diff. Defaults to 'false'.
+    required: false
+    default: false
+outputs:
+  checks-failed:
+    description: An integer that can be used as a boolean value to indicate if all checks failed.
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - --extensions=${{ inputs.extensions }}
+    - --repo-root=${{ inputs.repo-root }}
+    - --verbosity=${{ inputs.verbosity }}
+    - --diff-only=${{ inputs.diff-only }}

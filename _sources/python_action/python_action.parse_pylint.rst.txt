@@ -1,0 +1,33 @@
+python\_action.parse\_pylint
+============================
+
+.. automodule:: python_action.parse_pylint
+   :members:
+
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      annotate_pylint_note
+      run_pylint
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   

@@ -1,0 +1,38 @@
+python\_action.run
+==================
+
+.. automodule:: python_action.run
+   :members:
+
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      capture_linters_output
+      filter_out_non_source_files
+      get_list_of_changed_files
+      main
+      post_results
+      set_exit_code
+      verify_files_are_present
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   

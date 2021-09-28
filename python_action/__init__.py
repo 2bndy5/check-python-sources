@@ -93,7 +93,7 @@ def log_response_msg(override: bool = False):
     """Output the response buffer's message on failed request.
 
     :param bool override: Force this function to always output the body of the
-        `~Globals.response_buffer` (even if response's status code is less than 400).
+        :attr:`~Globals.response_buffer` (even if response's status code is less than 400).
     """
     if Globals.response_buffer.status_code >= 400 or override:
         logger.error("response returned message: %s", Globals.response_buffer.text)

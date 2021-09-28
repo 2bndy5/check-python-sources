@@ -217,7 +217,7 @@ def post_results():
         "name": "check-python-sources",
         "head_sha": GITHUB_SHA,
         "details_url": f"{GITHUB_SERVER_URL}/{GITHUB_REPOSITORY}/actions/runs/{GITHUB_RUN_ID}",
-        "external_id": GITHUB_RUN_ID,
+        "external_id": os.getenv("GITHUB_JOB", 0),
         "conclusion": "completed",  # not required if we don't timestamp the run
         "output": [],
     }

@@ -28,7 +28,7 @@ jobs:
         run: python3 -m pip install -r docs/requirements.txt
 
       - name: Build documentation
-        working_dir: docs
+        working-directory: docs
         run: sphinx-build -E -W . _build
 
       - name: Upload docs as artifact

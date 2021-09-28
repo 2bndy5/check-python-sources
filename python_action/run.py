@@ -10,7 +10,6 @@ the entrypoint.
     - `github rest API reference for issues <https://docs.github.com/en/rest/reference
       /issues>`_
 """
-import subprocess
 import os
 import sys
 import re
@@ -79,7 +78,7 @@ def set_exit_code(override: int = None) -> int:
         The exit code that was used. If the ``override`` parameter was not passed,
         then this `int` value will describe (like a bool value) if any checks failed.
     """
-    exit_code = override if override is not None else bool(Globals.OUTPUT)
+    exit_code = override if override is not None else bool(GlobalParser.pylint_notes)
     print(f"::set-output name=checks-failed::{exit_code}")
     return exit_code
 
@@ -212,8 +211,8 @@ def post_results():
         logger.error("The GITHUB_TOKEN is required!")
         sys.exit(set_exit_code(1))
 
-    base_url = f"{GITHUB_API_URL}/repos/{GITHUB_REPOSITORY}/check-runs"
-    logger.info("checks URL: %s", base_url)
+    url = f"{GITHUB_API_URL}/repos/{GITHUB_REPOSITORY}/commits/{GITHUB_SHA}/check-runs"
+    logger.info("checks URL: %s", url)
     data = {
         "name": "check-python-sources",
         "head_sha": GITHUB_SHA,
@@ -235,11 +234,11 @@ def post_results():
         if 100 > index >= 50:
             data["check_run_id"] = check_run_id
             method = "PATCH"
-            base_url += str(check_run_id)
+            url += str(check_run_id)
         logger.debug("payload: %s", json.dumps(data, indent=2))
         Globals.response_buffer = requests.request(
             method=method,
-            url=base_url,
+            url=url,
             headers=API_HEADERS,
             data=data,
         )

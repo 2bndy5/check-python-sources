@@ -96,4 +96,10 @@ def log_response_msg(override: bool = False):
         :attr:`~Globals.response_buffer` (even if response's status code is less than 400).
     """
     if Globals.response_buffer.status_code >= 400 or override:
-        logger.error("response returned message: %s", Globals.response_buffer.text)
+        logger.log(
+            logging.ERROR
+            if Globals.response_buffer.status_code >= 400
+            else logging.INFO,
+            "response returned message: %s",
+            Globals.response_buffer.text,
+        )

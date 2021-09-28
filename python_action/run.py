@@ -213,6 +213,7 @@ def post_results():
         sys.exit(set_exit_code(1))
 
     base_url = f"{GITHUB_API_URL}/repos/{GITHUB_REPOSITORY}/check-runs"
+    logger.info("checks URL: %s", base_url)
     data = {
         "name": "check-python-sources",
         "head_sha": GITHUB_SHA,
@@ -231,12 +232,15 @@ def post_results():
     while 0 <= index < len(annotations):
         data["output"] = annotations[index:50]
         index += 50
-        check_run_id = 0
-        if index >= 50:
+        check_run_id, method = (0, "POST")
+        if 100 > index >= 50:
             data["check_run_id"] = check_run_id
+            method = "PATCH"
+            base_url += str(check_run_id)
+        logger.debug("payload: %s", json.dumps(data, indent=2))
         Globals.response_buffer = requests.request(
-            method="POST" if index < 50 else "PATCH",
-            url=base_url + ("" if index < 50 else str(check_run_id)),
+            method=method,
+            url=base_url,
             headers=API_HEADERS,
             data=data,
         )

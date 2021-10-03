@@ -32,11 +32,11 @@ GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY", "2bndy5/check-python-sources"
 GITHUB_EVENT_NAME = os.getenv("GITHUB_EVENT_NAME", "push")
 GITHUB_SERVER_URL = os.getenv("GITHUB_SERVER_URL", "https://github.com")
 GITHUB_RUN_ID = os.getenv("GITHUB_RUN_ID", "0")
-GITHUB_SHA = os.getenv("GITHUB_SHA", "cf989be19c74ad1d27614badca3bc7f63eb73806")
+GITHUB_SHA = os.getenv("GITHUB_SHA", "562351563de8d47627ce5cfbd695ba0953aefd93")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", os.getenv("GIT_REST_API", None))
 API_HEADERS = {
     "Authorization": f"token {GITHUB_TOKEN}",
-    "Accept": "application/vnd.github.v3.text+json",
+    "Accept": "application/vnd.github.v3.json",
 }
 
 # setup CLI args
@@ -50,9 +50,9 @@ cli_arg_parser.add_argument(
 )
 cli_arg_parser.add_argument(
     "--extensions",
-    default="c,h,C,H,cpp,hpp,cc,hh,c++,h++,cxx,hxx",
+    default="py,pyi,toml",
     help="The file extensions to run the action against. This comma-separated string "
-    "defaults to 'c,h,C,H,cpp,hpp,cc,hh,c++,h++,cxx,hxx'.",
+    "defaults to 'py,pyi,toml'.",
 )
 cli_arg_parser.add_argument(
     "--repo-root",
@@ -92,15 +92,15 @@ def get_list_of_changed_files() -> None:
         logger.debug(json.dumps(Globals.EVENT_PAYLOAD))
 
     files_link = f"{GITHUB_API_URL}/repos/{GITHUB_REPOSITORY}/"
-    if GITHUB_EVENT_NAME == "pull_request":
-        files_link += f"pulls/{Globals.EVENT_PAYLOAD['number']}/files"
-    elif GITHUB_EVENT_NAME == "push":
+    if GITHUB_EVENT_NAME == "push":
         files_link += f"commits/{GITHUB_SHA}"
     else:
         logger.warning("triggered on unsupported event.")
         sys.exit(set_exit_code(0))
     logger.info("Fetching files list from url: %s", files_link)
-    Globals.FILES = requests.get(files_link).json()
+    Globals.response_buffer = requests.get(files_link)
+    temp_json = Globals.response_buffer.json()
+    Globals.FILES = temp_json["files"]
     logger.debug("files json:\n%s", json.dumps(Globals.FILES, indent=2))
 
 
@@ -117,9 +117,7 @@ def filter_out_non_source_files(ext_list: str, diff_only: bool) -> None:
     """
     ext_list = ext_list.split(",")
     files = []
-    for file in (
-        Globals.FILES if GITHUB_EVENT_NAME == "pull_request" else Globals.FILES["files"]
-    ):
+    for file in Globals.FILES:
         extension = re.search("\.\w+$", file["filename"])
         if (
             extension is not None
@@ -156,13 +154,8 @@ def filter_out_non_source_files(ext_list: str, diff_only: bool) -> None:
         sys.exit(set_exit_code(0))
     else:
         logger.info("File names:\n\t%s", "\n\t".join([f["filename"] for f in files]))
-        if GITHUB_EVENT_NAME == "pull_request":
-            Globals.FILES = files
-        else:
-            Globals.FILES["files"] = files
-        with open(
-            ".cpp_linter_action_changed_files.json", "w", encoding="utf-8"
-        ) as temp:
+        Globals.FILES = files
+        with open(".changed_files.json", "w", encoding="utf-8") as temp:
             json.dump(Globals.FILES, temp, indent=2)
 
 
@@ -174,9 +167,7 @@ def verify_files_are_present() -> None:
         repository. If files are not found, then they are downloaded to the working
         directory. This may be bad for files with the same name from different folders.
     """
-    for file in (
-        Globals.FILES if GITHUB_EVENT_NAME == "pull_request" else Globals.FILES["files"]
-    ):
+    for file in Globals.FILES:
         file_name = file["filename"].replace("/", os.sep)
         if not os.path.exists(file_name):
             logger.info("Downloading file from url: %s", file["raw_url"])
@@ -194,9 +185,7 @@ def capture_linters_output(diff_only: bool):
     """
     if GITHUB_EVENT_NAME == "push":
         diff_only = False  # diff comments are not supported for push events
-    for file in (
-        Globals.FILES if GITHUB_EVENT_NAME == "pull_request" else Globals.FILES["files"]
-    ):
+    for file in Globals.FILES:
         filename = file["filename"]
         if not os.path.exists(file["filename"]):
             filename = os.path.split(file["raw_url"])[1]
@@ -211,8 +200,9 @@ def post_results():
         logger.error("The GITHUB_TOKEN is required!")
         sys.exit(set_exit_code(1))
 
-    url = f"{GITHUB_API_URL}/repos/{GITHUB_REPOSITORY}/commits/{GITHUB_SHA}/check-runs"
-    logger.info("checks URL: %s", url)
+    url = f"{GITHUB_API_URL}/repos/{GITHUB_REPOSITORY}/"
+    logger.info("checks URL: %s", url + f"commits/{GITHUB_SHA}/" + "check-runs")
+    url += "check-runs"
     data = {
         "name": "check-python-sources",
         "head_sha": GITHUB_SHA,

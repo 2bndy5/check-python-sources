@@ -1,2 +1,2 @@
-git+https://github.com/jbms/sphinx-material
+git+https://github.com/jbms/sphinx-immaterial
 sphinx-copybutton

@@ -32,8 +32,8 @@ GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY", "2bndy5/check-python-sources"
 GITHUB_EVENT_NAME = os.getenv("GITHUB_EVENT_NAME", "push")
 GITHUB_SERVER_URL = os.getenv("GITHUB_SERVER_URL", "https://github.com")
 GITHUB_RUN_ID = os.getenv("GITHUB_RUN_ID", "0")
-GITHUB_SHA = os.getenv("GITHUB_SHA", "562351563de8d47627ce5cfbd695ba0953aefd93")
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", os.getenv("GIT_REST_API", None))
+GITHUB_SHA = os.getenv("GITHUB_SHA", "b4a3ded3367cc2a7346ab74e4452bf1b51f8420f")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", os.getenv("GIT_REST_API", ""))
 API_HEADERS = {
     "Authorization": f"token {GITHUB_TOKEN}",
     "Accept": "application/vnd.github.v3.json",
@@ -196,7 +196,7 @@ def capture_linters_output(diff_only: bool):
 
 def post_results():
     """Post action's results using REST API."""
-    if GITHUB_TOKEN is None:
+    if not GITHUB_TOKEN:
         logger.error("The GITHUB_TOKEN is required!")
         sys.exit(set_exit_code(1))
 

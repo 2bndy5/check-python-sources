@@ -6,14 +6,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>python_action.run &#8212; check-python-sources Github Action</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/material.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/doctools.js"></script>
     <script src="../../_static/clipboard.min.js"></script>
     <script src="../../_static/copybutton.js"></script>
     <link rel="canonical" href="https://check-python-sources.readthedocs.io/_modules/python_action/run.html" />
@@ -43,7 +38,7 @@
           <div class="body" role="main">
             
   <h1>Source code for python_action.run</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Run clang-tidy and clang-format on a list of changed files provided by GitHub&#39;s</span>
+<span></span><code><span class="sd">&quot;&quot;&quot;Run clang-tidy and clang-format on a list of changed files provided by GitHub&#39;s</span>
 <span class="sd">REST API. If executed from command-line, then [`main()`][python_action.run.main] is</span>
 <span class="sd">the entrypoint.</span>
 
@@ -77,8 +72,8 @@
 <span class="n">GITHUB_EVENT_NAME</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GITHUB_EVENT_NAME&quot;</span><span class="p">,</span> <span class="s2">&quot;push&quot;</span><span class="p">)</span>
 <span class="n">GITHUB_SERVER_URL</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GITHUB_SERVER_URL&quot;</span><span class="p">,</span> <span class="s2">&quot;https://github.com&quot;</span><span class="p">)</span>
 <span class="n">GITHUB_RUN_ID</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GITHUB_RUN_ID&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span>
-<span class="n">GITHUB_SHA</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GITHUB_SHA&quot;</span><span class="p">,</span> <span class="s2">&quot;562351563de8d47627ce5cfbd695ba0953aefd93&quot;</span><span class="p">)</span>
-<span class="n">GITHUB_TOKEN</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GITHUB_TOKEN&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GIT_REST_API&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+<span class="n">GITHUB_SHA</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GITHUB_SHA&quot;</span><span class="p">,</span> <span class="s2">&quot;b4a3ded3367cc2a7346ab74e4452bf1b51f8420f&quot;</span><span class="p">)</span>
+<span class="n">GITHUB_TOKEN</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GITHUB_TOKEN&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GIT_REST_API&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
 <span class="n">API_HEADERS</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;token </span><span class="si">{</span><span class="n">GITHUB_TOKEN</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;application/vnd.github.v3.json&quot;</span><span class="p">,</span>
@@ -241,7 +236,7 @@
 
 <div class="viewcode-block" id="post_results"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.post_results">[docs]</a><span class="k">def</span> <span class="nf">post_results</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Post action&#39;s results using REST API.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">GITHUB_TOKEN</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">GITHUB_TOKEN</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;The GITHUB_TOKEN is required!&quot;</span><span class="p">)</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">set_exit_code</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
 
@@ -313,7 +308,7 @@
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
-</pre></div>
+</code></pre></div>
 
             <div class="clearer"></div>
           </div>

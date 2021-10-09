@@ -1,10 +1,7 @@
 """Parse output from clang-tidy's stdout"""
-import os
-import sys
-import re
 import subprocess
 import json
-from . import GlobalParser, logger
+from . import GlobalParser, logger, log_commander, end_log_group, start_log_group
 
 
 def annotate_pylint_note(obj: dict) -> str:
@@ -28,7 +25,7 @@ def annotate_pylint_note(obj: dict) -> str:
             }
 
     :Returns:
-        A serialized JSON object (`str`) that can be used by github's checks API.
+        A `str` that can be used by github's workflow log commands.
     """
     priority = {
         "convention": "notice",
@@ -37,45 +34,49 @@ def annotate_pylint_note(obj: dict) -> str:
         "error": "failure",
         "fatal": "failure",
     }
-    return json.dumps(
-        {
-            "path": obj["path"],
-            "start_line": obj["line"],
-            "end_line": obj["line"],
-            "start_column": obj["column"],
-            "end_column": obj["column"],
-            "annotation_level": priority[obj["type"]],
-            "message": obj["message"],
-            "title": obj["symbol"] + " [" + obj["message-id"] + "]",
-        }
+    return (
+        "::{level} file={path},line={line},title={path}:{line}:{col} {symbol} [{code}]"
+        "::{msg}".format(
+            level=priority[obj["type"]],
+            path=obj["path"],
+            line=obj["line"],
+            col=obj["column"],
+            symbol=obj["symbol"],
+            code=obj["message-id"],
+            msg=obj["message"],
+        )
     )
 
 
-def run_pylint(filename: str, file_info: dict, diff_only: bool) -> None:
+def run_pylint(files: list) -> None:
     """Run a pylint on a given (single) file.
 
-    :param str filename: The path and name of the file to be checked.
-    :param dict file_info: A JSON type `dict` containing info about the given file.
-        This info is augmented from the REST API's list of changed files, and it is
-        only used when the github action's (or CLI argument) ``--diff-only`` option is
-        asserted.
+    :param list files: A `list` of JSON type `dict` containing info about the given
+        files.
     """
     cmds = ["pylint", "--output-format=json", "--exit-zero"]
-    if "line_filter" not in file_info.keys():
-        cmds.append(filename)
-    else:
-        # get source code from file, & pass it to the tool via stdin
-        for lines in file_info["line_filter"]:
-            cmds.append(lines)
+    for file in files:
+        if "line_filter" not in file.keys():
+            cmds.append(file['filename'])
+        else:  # TODO: line filters not implemented yet (incompatible with pylint)
+            # get source code from file, & pass it to the tool via stdin
+            for lines in file["line_filter"]:
+                cmds.append(lines)
+    start_log_group("Performing checkup on files")
     result = subprocess.run(cmds, check=True, capture_output=True)
     output = json.loads(result.stdout)
-    logger.debug(json.dumps(output, indent=2))
     GlobalParser.pylint_notes.append(output)
+    logger.debug("pylint output:\n%s", json.dumps(output, indent=2))
+    if result.returncode:
+        logger.error(
+            "pylint reported the following errors:\n%s", result.stderr.decode()
+        )
+    end_log_group()
 
 
 if __name__ == "__main__":
-    logger.setLevel(10)
-    run_pylint("tests/basic_test.py", {}, False)
-    for result in GlobalParser.pylint_notes:
-        for note in result:
-            logger.info(annotate_pylint_note(note))
+    logger.setLevel(20)
+    run_pylint([{"filename": "tests/basic_test.py"}])
+    for pylint_result in GlobalParser.pylint_notes:
+        for note in pylint_result:
+            log_commander.info(annotate_pylint_note(note))

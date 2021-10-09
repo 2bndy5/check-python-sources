@@ -31,8 +31,8 @@ def annotate_pylint_note(obj: dict) -> str:
         "convention": "notice",
         "refactor": "notice",
         "warning": "warning",
-        "error": "failure",
-        "fatal": "failure",
+        "error": "error",
+        "fatal": "error",
     }
     return (
         "::{level} file={path},line={line},title={path}:{line}:{col} {symbol} [{code}]"

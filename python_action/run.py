@@ -94,15 +94,13 @@ cli_arg_parser.add_argument(
 def is_file_in_list(paths: list, file_name: str, prompt: str) -> bool:
     """Detirmine if a file is specified in a list of paths and/or filenames.
 
-    Args:
-        paths: A list of specified paths to compare with. This list can contain a
-            specified file, but the file's path must be included as part of the
-            filename.
-        file_name: The file's path & name being sought in the `paths` list.
-        prompt: A debugging prompt to use when the path is found in the list.
-    Returns:
-        - True if `file_name` is in the `paths` list.
-        - False if `file_name` is not in the `paths` list.
+    :param list paths: A list of specified paths to compare with. This list can contain
+        a specified file, but the file's path must be included as part of the filename.
+    :param str file_name: The file's path & name being sought in the ``paths`` list.
+    :param str prompt: A debugging prompt to use when the path is found in the list.
+    :Returns:
+        - True if ``file_name`` is in the ``paths`` list.
+        - False if ``file_name`` is not in the ``paths`` list.
     """
     for path in paths:
         result = os.path.commonpath([path, file_name]).replace(os.sep, "/")

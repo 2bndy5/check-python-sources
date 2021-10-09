@@ -60,20 +60,26 @@ the entrypoint.</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#python_action.run.capture_linters_output" title="python_action.run.capture_linters_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">capture_linters_output</span></code></a>(diff_only)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#python_action.run.capture_linters_output" title="python_action.run.capture_linters_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">capture_linters_output</span></code></a>()</p></td>
 <td><p>Execute and capture all output from clang-tidy and clang-format.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#python_action.run.filter_out_non_source_files" title="python_action.run.filter_out_non_source_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_out_non_source_files</span></code></a>(ext_list, diff_only)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#python_action.run.filter_out_non_source_files" title="python_action.run.filter_out_non_source_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">filter_out_non_source_files</span></code></a>(ext_list, ...)</p></td>
 <td><p>Exclude undesired files (specified by user input 'extensions').</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#python_action.run.get_list_of_changed_files" title="python_action.run.get_list_of_changed_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_list_of_changed_files</span></code></a>()</p></td>
 <td><p>Fetch the JSON payload of the event's changed files.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#python_action.run.is_file_in_list" title="python_action.run.is_file_in_list"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_file_in_list</span></code></a>(paths, file_name, prompt)</p></td>
+<td><p>Detirmine if a file is specified in a list of paths and/or filenames.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#python_action.run.list_source_files" title="python_action.run.list_source_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">list_source_files</span></code></a>(ext_list, ignored_paths, ...)</p></td>
+<td><p>Make a list of source files to be checked.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#python_action.run.main" title="python_action.run.main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">main</span></code></a>()</p></td>
 <td><p>The main script.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#python_action.run.post_results" title="python_action.run.post_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_results</span></code></a>()</p></td>
-<td><p>Post action's results using REST API.</p></td>
+<td><p>Use github log commands to make annotations from pylint output.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#python_action.run.set_exit_code" title="python_action.run.set_exit_code"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_exit_code</span></code></a>([override])</p></td>
 <td><p>Set the action's exit code.</p></td>
@@ -84,55 +90,84 @@ the entrypoint.</p>
 </tbody>
 </table>
 <dl class="py function objdesc">
+<dt class="sig sig-object py sig-wrap" id="python_action.run.is_file_in_list">
+<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">is_file_in_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prompt</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></span></span></span><a class="reference internal" href="../_modules/python_action/run.html#is_file_in_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.is_file_in_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detirmine if a file is specified in a list of paths and/or filenames.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="api-field simple">
+<dt><span class="sig-name descname">paths</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)">list</a></span></span></dt><dd><p>A list of specified paths to compare with. This list can contain
+a specified file, but the file’s path must be included as part of the filename.</p>
+</dd>
+<dt><span class="sig-name descname">file_name</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)">str</a></span></span></dt><dd><p>The file’s path &amp; name being sought in the <code class="docutils literal notranslate"><span class="pre">paths</span></code> list.</p>
+</dd>
+<dt><span class="sig-name descname">prompt</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)">str</a></span></span></dt><dd><p>A debugging prompt to use when the path is found in the list.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><ul class="simple">
+<li><p>True if <code class="docutils literal notranslate"><span class="pre">file_name</span></code> is in the <code class="docutils literal notranslate"><span class="pre">paths</span></code> list.</p></li>
+<li><p>False if <code class="docutils literal notranslate"><span class="pre">file_name</span></code> is not in the <code class="docutils literal notranslate"><span class="pre">paths</span></code> list.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function objdesc">
 <dt class="sig sig-object py sig-wrap" id="python_action.run.set_exit_code">
-<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">set_exit_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">override</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span></span> <span class="o"><span class="pre">=</span></span> <code class="code python default_value docutils literal highlight highlight-python"><span class="kc">None</span></code></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><span class="pre">int</span></a></span></span></span><a class="reference internal" href="../_modules/python_action/run.html#set_exit_code"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.set_exit_code" title="Permalink to this definition">¶</a></dt>
+<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">set_exit_code</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">override</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span></span> <span class="o"><span class="pre">=</span></span> <code class="code python default_value docutils literal highlight highlight-python"><span class="kc">None</span></code></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><span class="pre">int</span></a></span></span></span><a class="reference internal" href="../_modules/python_action/run.html#set_exit_code"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.set_exit_code" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the action’s exit code.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="api-field simple">
-<dt><span class="sig-name descname">override</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></span></span></dt><dd><p>The number to use when overriding the action’s logic.</p>
+<dt><span class="sig-name descname">override</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)">int</a></span></span></dt><dd><p>The number to use when overriding the action’s logic.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>The exit code that was used. If the <code class="docutils literal notranslate"><span class="pre">override</span></code> parameter was not passed,
-then this <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><code class="xref any docutils literal notranslate"><span class="pre">int</span></code></a> value will describe (like a bool value) if any checks failed.</p>
+then this <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.10)"><code class="xref any docutils literal notranslate"><span class="pre">int</span></code></a> value will describe (like a bool value) if any checks failed.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function objdesc">
 <dt class="sig sig-object py" id="python_action.run.get_list_of_changed_files">
-<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">get_list_of_changed_files</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><span class="pre">None</span></a></span></span></span><a class="reference internal" href="../_modules/python_action/run.html#get_list_of_changed_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.get_list_of_changed_files" title="Permalink to this definition">¶</a></dt>
+<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">get_list_of_changed_files</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><span class="pre">None</span></a></span></span></span><a class="reference internal" href="../_modules/python_action/run.html#get_list_of_changed_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.get_list_of_changed_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch the JSON payload of the event’s changed files. Sets the
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">FILES</span></code> attribute.</p>
 </dd></dl>
 
 <dl class="py function objdesc">
 <dt class="sig sig-object py sig-wrap" id="python_action.run.filter_out_non_source_files">
-<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">filter_out_non_source_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ext_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><span class="pre">str</span></a></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diff_only</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><span class="pre">bool</span></a></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><span class="pre">None</span></a></span></span></span><a class="reference internal" href="../_modules/python_action/run.html#filter_out_non_source_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.filter_out_non_source_files" title="Permalink to this definition">¶</a></dt>
+<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">filter_out_non_source_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ext_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignored</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">not_ignored</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lines_changed_only</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></span></span></span><a class="reference internal" href="../_modules/python_action/run.html#filter_out_non_source_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.filter_out_non_source_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exclude undesired files (specified by user input ‘extensions’). This filter
 applies to the event’s <code class="xref py py-attr docutils literal notranslate"><span class="pre">FILES</span></code> attribute.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="api-field simple">
-<dt><span class="sig-name descname">ext_list</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a></span></span></dt><dd><p>A comma-separated <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref any docutils literal notranslate"><span class="pre">str</span></code></a> of extensions that are concerned.</p>
+<dt><span class="sig-name descname">ext_list</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)">list</a></span></span></dt><dd><p>A <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref any docutils literal notranslate"><span class="pre">list</span></code></a> of file extensions that should be attended.</p>
 </dd>
-<dt><span class="sig-name descname">diff_only</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></span></span></dt><dd><p>A flag that forces focus on only changes in the event’s diff
-info.</p>
+<dt><span class="sig-name descname">ignored_paths</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)">list</a></span></span></dt><dd><p>A list of paths to explicitly ignore.</p>
+</dd>
+<dt><span class="sig-name descname">not_ignored</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)">list</a></span></span></dt><dd><p>A list of paths to explicitly not ignore.</p>
+</dd>
+<dt><span class="sig-name descname">lines_changed_only</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)">bool</a></span></span></dt><dd><p>A flag that forces focus on only changes in the
+event’s diff info.</p>
 </dd>
 </dl>
 </dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if there are files to check. False will invoke a early exit (in
+<a class="reference internal" href="#python_action.run.main" title="python_action.run.main"><code class="xref any py py-func docutils literal notranslate"><span class="pre">main()</span></code></a> when no files to be checked.</p>
+</dd>
 </dl>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This will exit early when nothing left to do.</p>
-</div>
 </dd></dl>
 
 <dl class="py function objdesc">
 <dt class="sig sig-object py" id="python_action.run.verify_files_are_present">
-<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">verify_files_are_present</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.9)"><span class="pre">None</span></a></span></span></span><a class="reference internal" href="../_modules/python_action/run.html#verify_files_are_present"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.verify_files_are_present" title="Permalink to this definition">¶</a></dt>
+<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">verify_files_are_present</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><span class="pre">None</span></a></span></span></span><a class="reference internal" href="../_modules/python_action/run.html#verify_files_are_present"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.verify_files_are_present" title="Permalink to this definition">¶</a></dt>
 <dd><p>Download the files if not present.</p>
 <div class="admonition hint">
 <p class="admonition-title">Hint</p>
@@ -143,25 +178,39 @@ directory. This may be bad for files with the same name from different folders.<
 </dd></dl>
 
 <dl class="py function objdesc">
-<dt class="sig sig-object py" id="python_action.run.capture_linters_output">
-<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">capture_linters_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">diff_only</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><span class="pre">bool</span></a></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/python_action/run.html#capture_linters_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.capture_linters_output" title="Permalink to this definition">¶</a></dt>
-<dd><p>Execute and capture all output from clang-tidy and clang-format. This aggregates
-results in the <code class="xref py py-attr docutils literal notranslate"><span class="pre">OUTPUT</span></code>.</p>
+<dt class="sig sig-object py sig-wrap" id="python_action.run.list_source_files">
+<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">list_source_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ext_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignored_paths</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">not_ignored</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><span class="pre">list</span></a></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.10)"><span class="pre">bool</span></a></span></span></span><a class="reference internal" href="../_modules/python_action/run.html#list_source_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.list_source_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a list of source files to be checked. The resulting list is stored in
+[<a class="reference internal" href="python_action.html#python_action.Globals.FILES" title="python_action.Globals.FILES"><code class="xref any py py-attr docutils literal notranslate"><span class="pre">FILES</span></code></a>][Global.FILES].</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="api-field simple">
-<dt><span class="sig-name descname">diff_only</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></span></span></dt><dd><p>A flag that forces focus on only changes in the event’s diff
-info.</p>
+<dt><span class="sig-name descname">ext_list</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)">list</a></span></span></dt><dd><p>A <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref any docutils literal notranslate"><span class="pre">list</span></code></a> of file extensions that should be attended.</p>
+</dd>
+<dt><span class="sig-name descname">ignored_paths</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)">list</a></span></span></dt><dd><p>A list of paths to explicitly ignore.</p>
+</dd>
+<dt><span class="sig-name descname">not_ignored</span><span class="p"> : </span><span class="desctype"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.10)">list</a></span></span></dt><dd><p>A list of paths to explicitly not ignore.</p>
 </dd>
 </dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if there are files to check. False will invoke a early exit (in
+[<a class="reference internal" href="#python_action.run.main" title="python_action.run.main"><code class="xref any py py-func docutils literal notranslate"><span class="pre">main()</span></code></a>][python_action.run.main()]) when no files to be checked.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function objdesc">
+<dt class="sig sig-object py" id="python_action.run.capture_linters_output">
+<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">capture_linters_output</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><span class="pre">None</span></a></span></span></span><a class="reference internal" href="../_modules/python_action/run.html#capture_linters_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.capture_linters_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute and capture all output from clang-tidy and clang-format. This aggregates
+results in the <code class="xref py py-attr docutils literal notranslate"><span class="pre">OUTPUT</span></code>.</p>
+</dd></dl>
+
+<dl class="py function objdesc">
 <dt class="sig sig-object py" id="python_action.run.post_results">
-<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">post_results</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/python_action/run.html#post_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.post_results" title="Permalink to this definition">¶</a></dt>
-<dd><p>Post action’s results using REST API.</p>
+<em class="property"> </em><span class="sig-prename descclassname"><span class="pre">python_action.run.</span></span><span class="sig-name descname"><span class="pre">post_results</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="desctype"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.10)"><span class="pre">None</span></a></span></span></span><a class="reference internal" href="../_modules/python_action/run.html#post_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#python_action.run.post_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use github log commands to make annotations from pylint output.</p>
 </dd></dl>
 
 <dl class="py function objdesc">
@@ -181,10 +230,12 @@ info.</p>
   <h3><a href="../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">python_action.run</a><ul>
+<li><a class="reference internal" href="#python_action.run.is_file_in_list">python_action.run.is_file_in_list</a></li>
 <li><a class="reference internal" href="#python_action.run.set_exit_code">python_action.run.set_exit_code</a></li>
 <li><a class="reference internal" href="#python_action.run.get_list_of_changed_files">python_action.run.get_list_of_changed_files</a></li>
 <li><a class="reference internal" href="#python_action.run.filter_out_non_source_files">python_action.run.filter_out_non_source_files</a></li>
 <li><a class="reference internal" href="#python_action.run.verify_files_are_present">python_action.run.verify_files_are_present</a></li>
+<li><a class="reference internal" href="#python_action.run.list_source_files">python_action.run.list_source_files</a></li>
 <li><a class="reference internal" href="#python_action.run.capture_linters_output">python_action.run.capture_linters_output</a></li>
 <li><a class="reference internal" href="#python_action.run.post_results">python_action.run.post_results</a></li>
 <li><a class="reference internal" href="#python_action.run.main">python_action.run.main</a></li>

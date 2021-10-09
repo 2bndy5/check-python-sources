@@ -39,12 +39,9 @@
             
   <h1>Source code for python_action.parse_pylint</h1><div class="highlight"><pre>
 <span></span><code><span class="sd">&quot;&quot;&quot;Parse output from clang-tidy&#39;s stdout&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">subprocess</span>
 <span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">GlobalParser</span><span class="p">,</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">GlobalParser</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">log_commander</span><span class="p">,</span> <span class="n">end_log_group</span><span class="p">,</span> <span class="n">start_log_group</span>
 
 
 <div class="viewcode-block" id="annotate_pylint_note"><a class="viewcode-back" href="../../python_action/python_action.parse_pylint.html#python_action.parse_pylint.annotate_pylint_note">[docs]</a><span class="k">def</span> <span class="nf">annotate_pylint_note</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -68,7 +65,7 @@
 <span class="sd">            }</span>
 
 <span class="sd">    :Returns:</span>
-<span class="sd">        A serialized JSON object (`str`) that can be used by github&#39;s checks API.</span>
+<span class="sd">        A `str` that can be used by github&#39;s workflow log commands.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">priority</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;convention&quot;</span><span class="p">:</span> <span class="s2">&quot;notice&quot;</span><span class="p">,</span>
@@ -77,48 +74,52 @@
         <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;failure&quot;</span><span class="p">,</span>
         <span class="s2">&quot;fatal&quot;</span><span class="p">:</span> <span class="s2">&quot;failure&quot;</span><span class="p">,</span>
     <span class="p">}</span>
-    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-        <span class="p">{</span>
-            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;start_line&quot;</span><span class="p">:</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;line&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;end_line&quot;</span><span class="p">:</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;line&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;start_column&quot;</span><span class="p">:</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;column&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;end_column&quot;</span><span class="p">:</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;column&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;annotation_level&quot;</span><span class="p">:</span> <span class="n">priority</span><span class="p">[</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]],</span>
-            <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;message&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;symbol&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot; [&quot;</span> <span class="o">+</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;message-id&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span><span class="p">,</span>
-        <span class="p">}</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="s2">&quot;::</span><span class="si">{level}</span><span class="s2"> file=</span><span class="si">{path}</span><span class="s2">,line=</span><span class="si">{line}</span><span class="s2">,title=</span><span class="si">{path}</span><span class="s2">:</span><span class="si">{line}</span><span class="s2">:</span><span class="si">{col}</span><span class="s2"> </span><span class="si">{symbol}</span><span class="s2"> [</span><span class="si">{code}</span><span class="s2">]&quot;</span>
+        <span class="s2">&quot;::</span><span class="si">{msg}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">priority</span><span class="p">[</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]],</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">],</span>
+            <span class="n">line</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;line&quot;</span><span class="p">],</span>
+            <span class="n">col</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;column&quot;</span><span class="p">],</span>
+            <span class="n">symbol</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;symbol&quot;</span><span class="p">],</span>
+            <span class="n">code</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;message-id&quot;</span><span class="p">],</span>
+            <span class="n">msg</span><span class="o">=</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;message&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="run_pylint"><a class="viewcode-back" href="../../python_action/python_action.parse_pylint.html#python_action.parse_pylint.run_pylint">[docs]</a><span class="k">def</span> <span class="nf">run_pylint</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">diff_only</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="run_pylint"><a class="viewcode-back" href="../../python_action/python_action.parse_pylint.html#python_action.parse_pylint.run_pylint">[docs]</a><span class="k">def</span> <span class="nf">run_pylint</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Run a pylint on a given (single) file.</span>
 
-<span class="sd">    :param str filename: The path and name of the file to be checked.</span>
-<span class="sd">    :param dict file_info: A JSON type `dict` containing info about the given file.</span>
-<span class="sd">        This info is augmented from the REST API&#39;s list of changed files, and it is</span>
-<span class="sd">        only used when the github action&#39;s (or CLI argument) ``--diff-only`` option is</span>
-<span class="sd">        asserted.</span>
+<span class="sd">    :param list files: A `list` of JSON type `dict` containing info about the given</span>
+<span class="sd">        files.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">cmds</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;pylint&quot;</span><span class="p">,</span> <span class="s2">&quot;--output-format=json&quot;</span><span class="p">,</span> <span class="s2">&quot;--exit-zero&quot;</span><span class="p">]</span>
-    <span class="k">if</span> <span class="s2">&quot;line_filter&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file_info</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># get source code from file, &amp; pass it to the tool via stdin</span>
-        <span class="k">for</span> <span class="n">lines</span> <span class="ow">in</span> <span class="n">file_info</span><span class="p">[</span><span class="s2">&quot;line_filter&quot;</span><span class="p">]:</span>
-            <span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;line_filter&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span><span class="p">[</span><span class="s1">&#39;filename&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># TODO: line filters not implemented yet (incompatible with pylint)</span>
+            <span class="c1"># get source code from file, &amp; pass it to the tool via stdin</span>
+            <span class="k">for</span> <span class="n">lines</span> <span class="ow">in</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;line_filter&quot;</span><span class="p">]:</span>
+                <span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+    <span class="n">start_log_group</span><span class="p">(</span><span class="s2">&quot;Performing checkup on files&quot;</span><span class="p">)</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmds</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">output</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
-    <span class="n">GlobalParser</span><span class="o">.</span><span class="n">pylint_notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
+    <span class="n">GlobalParser</span><span class="o">.</span><span class="n">pylint_notes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;pylint output:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">&quot;pylint reported the following errors:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+        <span class="p">)</span>
+    <span class="n">end_log_group</span><span class="p">()</span></div>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-    <span class="n">run_pylint</span><span class="p">(</span><span class="s2">&quot;tests/basic_test.py&quot;</span><span class="p">,</span> <span class="p">{},</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">GlobalParser</span><span class="o">.</span><span class="n">pylint_notes</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">note</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">annotate_pylint_note</span><span class="p">(</span><span class="n">note</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+    <span class="n">run_pylint</span><span class="p">([{</span><span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;tests/basic_test.py&quot;</span><span class="p">}])</span>
+    <span class="k">for</span> <span class="n">pylint_result</span> <span class="ow">in</span> <span class="n">GlobalParser</span><span class="o">.</span><span class="n">pylint_notes</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">note</span> <span class="ow">in</span> <span class="n">pylint_result</span><span class="p">:</span>
+            <span class="n">log_commander</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">annotate_pylint_note</span><span class="p">(</span><span class="n">note</span><span class="p">))</span>
 </code></pre></div>
 
             <div class="clearer"></div>

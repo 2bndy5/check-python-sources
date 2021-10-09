@@ -18,6 +18,8 @@ python\_action.run
       capture_linters_output
       filter_out_non_source_files
       get_list_of_changed_files
+      is_file_in_list
+      list_source_files
       main
       post_results
       set_exit_code

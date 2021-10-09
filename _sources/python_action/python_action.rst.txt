@@ -15,9 +15,10 @@
 
    .. autosummary::
    
+      end_log_group
       get_line_cnt_from_cols
       get_lines_from_file
-      log_response_msg
+      start_log_group
    
    
 

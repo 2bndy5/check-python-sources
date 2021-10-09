@@ -52,7 +52,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">configparser</span>
 <span class="kn">import</span> <span class="nn">argparse</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">requests</span>
@@ -60,7 +60,10 @@
     <span class="n">Globals</span><span class="p">,</span>
     <span class="n">GlobalParser</span><span class="p">,</span>
     <span class="n">logger</span><span class="p">,</span>
-    <span class="n">log_response_msg</span><span class="p">,</span>
+    <span class="n">logging</span><span class="p">,</span>
+    <span class="n">log_commander</span><span class="p">,</span>
+    <span class="n">start_log_group</span><span class="p">,</span>
+    <span class="n">end_log_group</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.parse_pylint</span> <span class="kn">import</span> <span class="n">annotate_pylint_note</span><span class="p">,</span> <span class="n">run_pylint</span>
 
@@ -84,29 +87,72 @@
     <span class="n">description</span><span class="o">=</span><span class="vm">__doc__</span><span class="p">[:</span> <span class="vm">__doc__</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;If executed from&quot;</span><span class="p">)]</span>
 <span class="p">)</span>
 <span class="n">cli_arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;-v&quot;</span><span class="p">,</span>
     <span class="s2">&quot;--verbosity&quot;</span><span class="p">,</span>
     <span class="n">default</span><span class="o">=</span><span class="s2">&quot;10&quot;</span><span class="p">,</span>
     <span class="n">help</span><span class="o">=</span><span class="s2">&quot;The logging level. Defaults to level 20 (aka &#39;logging.INFO&#39;).&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">cli_arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;-e&quot;</span><span class="p">,</span>
     <span class="s2">&quot;--extensions&quot;</span><span class="p">,</span>
-    <span class="n">default</span><span class="o">=</span><span class="s2">&quot;py,pyi,toml&quot;</span><span class="p">,</span>
+    <span class="n">default</span><span class="o">=</span><span class="s2">&quot;py,pyi&quot;</span><span class="p">,</span>
     <span class="n">help</span><span class="o">=</span><span class="s2">&quot;The file extensions to run the action against. This comma-separated string &quot;</span>
-    <span class="s2">&quot;defaults to &#39;py,pyi,toml&#39;.&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;defaults to </span><span class="si">%(default)s</span><span class="s2">.&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">cli_arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;-r&quot;</span><span class="p">,</span>
     <span class="s2">&quot;--repo-root&quot;</span><span class="p">,</span>
     <span class="n">default</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
-    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;The relative path to the repository root directory. The default value &#39;.&#39; is &quot;</span>
-    <span class="s2">&quot;relative to the runner&#39;s GITHUB_WORKSPACE environment variable.&quot;</span><span class="p">,</span>
+    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;The relative path to the repository root directory. The default value &quot;</span>
+    <span class="s2">&quot;&#39;</span><span class="si">%(default)s</span><span class="s2">&#39; is relative to the runner&#39;s GITHUB_WORKSPACE environment variable.&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">cli_arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-    <span class="s2">&quot;--diff-only&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;-i&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;--ignore&quot;</span><span class="p">,</span>
+    <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span>
+    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Set this option with paths to ignore. In the case of multiple &quot;</span>
+    <span class="s2">&quot;paths, you can the pipe character (&#39;|&#39;) between each path. This can &quot;</span>
+    <span class="s2">&quot;also have files, but the file&#39;s relative path has to be specified as well &quot;</span>
+    <span class="s2">&quot;with the filename. Prefix any path with a bang (&#39;!&#39;) to explicitly include it.&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">cli_arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;--lines-changed-only&quot;</span><span class="p">,</span>
     <span class="n">default</span><span class="o">=</span><span class="s2">&quot;false&quot;</span><span class="p">,</span>
     <span class="nb">type</span><span class="o">=</span><span class="k">lambda</span> <span class="nb">input</span><span class="p">:</span> <span class="nb">input</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span>
     <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Set this option to &#39;true&#39; to only analyse changes in the event&#39;s diff. &quot;</span>
-    <span class="s2">&quot;Defaults to &#39;false&#39;.&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Defaults to </span><span class="si">%(default)s</span><span class="s2">.&quot;</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="n">cli_arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+    <span class="s2">&quot;--files-changed-only&quot;</span><span class="p">,</span>
+    <span class="n">default</span><span class="o">=</span><span class="s2">&quot;true&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="o">=</span><span class="k">lambda</span> <span class="nb">input</span><span class="p">:</span> <span class="nb">input</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span>
+    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Set this option to &#39;false&#39; to analyse any source files in the repo. &quot;</span>
+    <span class="s2">&quot;Defaults to </span><span class="si">%(default)s</span><span class="s2">.&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="is_file_in_list"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.is_file_in_list">[docs]</a><span class="k">def</span> <span class="nf">is_file_in_list</span><span class="p">(</span><span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">prompt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Detirmine if a file is specified in a list of paths and/or filenames.</span>
+
+<span class="sd">    :param list paths: A list of specified paths to compare with. This list can contain</span>
+<span class="sd">        a specified file, but the file&#39;s path must be included as part of the filename.</span>
+<span class="sd">    :param str file_name: The file&#39;s path &amp; name being sought in the ``paths`` list.</span>
+<span class="sd">    :param str prompt: A debugging prompt to use when the path is found in the list.</span>
+<span class="sd">    :Returns:</span>
+<span class="sd">        - True if ``file_name`` is in the ``paths`` list.</span>
+<span class="sd">        - False if ``file_name`` is not in the ``paths`` list.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">commonpath</span><span class="p">([</span><span class="n">path</span><span class="p">,</span> <span class="n">file_name</span><span class="p">])</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="n">path</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s1">&#39;&quot;./</span><span class="si">%s</span><span class="s1">&quot; is </span><span class="si">%s</span><span class="s1"> as specified in the domain &quot;./</span><span class="si">%s</span><span class="s1">&quot;&#39;</span><span class="p">,</span>
+                <span class="n">file_name</span><span class="p">,</span>
+                <span class="n">prompt</span><span class="p">,</span>
+                <span class="n">path</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
 
 
 <div class="viewcode-block" id="set_exit_code"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.set_exit_code">[docs]</a><span class="k">def</span> <span class="nf">set_exit_code</span><span class="p">(</span><span class="n">override</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -126,47 +172,52 @@
 <div class="viewcode-block" id="get_list_of_changed_files"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.get_list_of_changed_files">[docs]</a><span class="k">def</span> <span class="nf">get_list_of_changed_files</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Fetch the JSON payload of the event&#39;s changed files. Sets the</span>
 <span class="sd">    :attr:`~python_action.__init__.Globals.FILES` attribute.&quot;&quot;&quot;</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;processing </span><span class="si">%s</span><span class="s2"> event&quot;</span><span class="p">,</span> <span class="n">GITHUB_EVENT_NAME</span><span class="p">)</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">GITHUB_EVEN_PATH</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">payload</span><span class="p">:</span>
-        <span class="n">Globals</span><span class="o">.</span><span class="n">EVENT_PAYLOAD</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">Globals</span><span class="o">.</span><span class="n">EVENT_PAYLOAD</span><span class="p">))</span>
-
     <span class="n">files_link</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">GITHUB_API_URL</span><span class="si">}</span><span class="s2">/repos/</span><span class="si">{</span><span class="n">GITHUB_REPOSITORY</span><span class="si">}</span><span class="s2">/&quot;</span>
-    <span class="k">if</span> <span class="n">GITHUB_EVENT_NAME</span> <span class="o">==</span> <span class="s2">&quot;push&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">GITHUB_EVENT_NAME</span> <span class="o">==</span> <span class="s2">&quot;pull_request&quot;</span><span class="p">:</span>
+        <span class="n">files_link</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;pulls/</span><span class="si">{</span><span class="n">Globals</span><span class="o">.</span><span class="n">EVENT_PAYLOAD</span><span class="p">[</span><span class="s1">&#39;number&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">/files&quot;</span>
+    <span class="k">elif</span> <span class="n">GITHUB_EVENT_NAME</span> <span class="o">==</span> <span class="s2">&quot;push&quot;</span><span class="p">:</span>
         <span class="n">files_link</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;commits/</span><span class="si">{</span><span class="n">GITHUB_SHA</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;triggered on unsupported event.&quot;</span><span class="p">)</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">set_exit_code</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Fetching files list from url: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">files_link</span><span class="p">)</span>
-    <span class="n">Globals</span><span class="o">.</span><span class="n">response_buffer</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">files_link</span><span class="p">)</span>
-    <span class="n">temp_json</span> <span class="o">=</span> <span class="n">Globals</span><span class="o">.</span><span class="n">response_buffer</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
-    <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span> <span class="o">=</span> <span class="n">temp_json</span><span class="p">[</span><span class="s2">&quot;files&quot;</span><span class="p">]</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;files json:</span><span class="se">\n</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span></div>
+    <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">files_link</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="filter_out_non_source_files"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.filter_out_non_source_files">[docs]</a><span class="k">def</span> <span class="nf">filter_out_non_source_files</span><span class="p">(</span><span class="n">ext_list</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">diff_only</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="filter_out_non_source_files"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.filter_out_non_source_files">[docs]</a><span class="k">def</span> <span class="nf">filter_out_non_source_files</span><span class="p">(</span>
+    <span class="n">ext_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">ignored</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">not_ignored</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">lines_changed_only</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Exclude undesired files (specified by user input &#39;extensions&#39;). This filter</span>
 <span class="sd">    applies to the event&#39;s :attr:`~python_action.__init__.Globals.FILES` attribute.</span>
 
-<span class="sd">    :param str ext_list: A comma-separated `str` of extensions that are concerned.</span>
-<span class="sd">    :param bool diff_only: A flag that forces focus on only changes in the event&#39;s diff</span>
-<span class="sd">        info.</span>
+<span class="sd">    :param list ext_list: A `list` of file extensions that should be attended.</span>
+<span class="sd">    :param list ignored_paths: A list of paths to explicitly ignore.</span>
+<span class="sd">    :param list not_ignored: A list of paths to explicitly not ignore.</span>
+<span class="sd">    :param bool lines_changed_only: A flag that forces focus on only changes in the</span>
+<span class="sd">        event&#39;s diff info.</span>
 
-<span class="sd">    .. note::</span>
-<span class="sd">        This will exit early when nothing left to do.</span>
+<span class="sd">    :Returns:</span>
+<span class="sd">        True if there are files to check. False will invoke a early exit (in</span>
+<span class="sd">        `main()` when no files to be checked.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">ext_list</span> <span class="o">=</span> <span class="n">ext_list</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
     <span class="n">files</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">:</span>
-        <span class="n">extension</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;\.\w+$&quot;</span><span class="p">,</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span> <span class="k">if</span> <span class="n">GITHUB_EVENT_NAME</span> <span class="o">==</span> <span class="s2">&quot;pull_request&quot;</span> <span class="k">else</span> <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">[</span><span class="s2">&quot;files&quot;</span><span class="p">]</span>
+    <span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
-            <span class="n">extension</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="n">extension</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span> <span class="ow">in</span> <span class="n">ext_list</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">file</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">])[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span> <span class="ow">in</span> <span class="n">ext_list</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;removed&quot;</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">is_file_in_list</span><span class="p">(</span><span class="n">ignored</span><span class="p">,</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">],</span> <span class="s2">&quot;ignored&quot;</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="n">is_file_in_list</span><span class="p">(</span><span class="n">not_ignored</span><span class="p">,</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">],</span> <span class="s2">&quot;not ignored&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
         <span class="p">):</span>
-            <span class="k">if</span> <span class="n">diff_only</span> <span class="ow">and</span> <span class="s2">&quot;patch&quot;</span> <span class="ow">in</span> <span class="n">file</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">lines_changed_only</span> <span class="ow">and</span> <span class="s2">&quot;patch&quot;</span> <span class="ow">in</span> <span class="n">file</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                 <span class="c1"># get diff details for the file&#39;s changes</span>
-                <span class="n">line_filter</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">line_filter</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">),</span>
+                    <span class="s2">&quot;lines&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="p">}</span>
                 <span class="n">file</span><span class="p">[</span><span class="s2">&quot;diff_line_map&quot;</span><span class="p">],</span> <span class="n">line_numb_in_diff</span> <span class="o">=</span> <span class="p">({},</span> <span class="mi">0</span><span class="p">)</span>
                 <span class="c1"># diff_line_map is a dict for which each</span>
                 <span class="c1">#     - key is the line number in the file</span>
@@ -177,26 +228,36 @@
                         <span class="n">changed_hunk</span> <span class="o">=</span> <span class="n">changed_hunk</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
                         <span class="n">start_line</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">changed_hunk</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
                         <span class="n">hunk_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">changed_hunk</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-                        <span class="n">line_filter</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">start_line</span><span class="p">,</span> <span class="n">hunk_length</span> <span class="o">+</span> <span class="n">start_line</span><span class="p">])</span>
+                        <span class="n">line_filter</span><span class="p">[</span><span class="s2">&quot;lines&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">[</span><span class="n">start_line</span><span class="p">,</span> <span class="n">hunk_length</span> <span class="o">+</span> <span class="n">start_line</span><span class="p">]</span>
+                        <span class="p">)</span>
                         <span class="n">line_numb_in_diff</span> <span class="o">=</span> <span class="n">start_line</span>
                     <span class="k">elif</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">):</span>
                         <span class="n">file</span><span class="p">[</span><span class="s2">&quot;diff_line_map&quot;</span><span class="p">][</span><span class="n">line_numb_in_diff</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
-                        <span class="n">line_filter</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">line_numb_in_diff</span>
+                        <span class="n">line_filter</span><span class="p">[</span><span class="s2">&quot;lines&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">line_numb_in_diff</span>
                         <span class="n">line_numb_in_diff</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">file</span><span class="p">[</span><span class="s2">&quot;line_filter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">line_filter</span>
-            <span class="k">elif</span> <span class="n">diff_only</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">lines_changed_only</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">files</span><span class="p">:</span>
-        <span class="c1"># exit early if no changed files are source files</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No source files need checking!&quot;</span><span class="p">)</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">set_exit_code</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">files</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Giving attention to the following files:</span><span class="se">\n\t</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;</span><span class="se">\n\t</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">GITHUB_EVENT_NAME</span> <span class="o">==</span> <span class="s2">&quot;pull_request&quot;</span><span class="p">:</span>
+            <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span> <span class="o">=</span> <span class="n">files</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">[</span><span class="s2">&quot;files&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">files</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;CI&quot;</span><span class="p">):</span>  <span class="c1"># if not executed on a github runner</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;.changed_files.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp</span><span class="p">:</span>
+                <span class="c1"># dump altered json of changed files</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">,</span> <span class="n">temp</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;File names:</span><span class="se">\n\t</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\n\t</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]))</span>
-        <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span> <span class="o">=</span> <span class="n">files</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;.changed_files.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp</span><span class="p">:</span>
-            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">,</span> <span class="n">temp</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></div>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No source files need checking!&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
 
 
 <div class="viewcode-block" id="verify_files_are_present"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.verify_files_are_present">[docs]</a><span class="k">def</span> <span class="nf">verify_files_are_present</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -207,84 +268,88 @@
 <span class="sd">        repository. If files are not found, then they are downloaded to the working</span>
 <span class="sd">        directory. This may be bad for files with the same name from different folders.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span> <span class="k">if</span> <span class="n">GITHUB_EVENT_NAME</span> <span class="o">==</span> <span class="s2">&quot;pull_request&quot;</span> <span class="k">else</span> <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">[</span><span class="s2">&quot;files&quot;</span><span class="p">]</span>
+    <span class="p">):</span>
         <span class="n">file_name</span> <span class="o">=</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_name</span><span class="p">):</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Downloading file from url: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;raw_url&quot;</span><span class="p">])</span>
             <span class="n">download</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">file</span><span class="p">[</span><span class="s2">&quot;raw_url&quot;</span><span class="p">])</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">file_name</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp</span><span class="p">:</span>
-                <span class="n">temp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">download</span><span class="p">)</span></div>
+                <span class="n">temp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">download</span><span class="o">.</span><span class="n">text</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="capture_linters_output"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.capture_linters_output">[docs]</a><span class="k">def</span> <span class="nf">capture_linters_output</span><span class="p">(</span><span class="n">diff_only</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+<div class="viewcode-block" id="list_source_files"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.list_source_files">[docs]</a><span class="k">def</span> <span class="nf">list_source_files</span><span class="p">(</span><span class="n">ext_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">ignored_paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">not_ignored</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Make a list of source files to be checked. The resulting list is stored in</span>
+<span class="sd">    [`FILES`][Global.FILES].</span>
+
+<span class="sd">    :param list ext_list: A `list` of file extensions that should be attended.</span>
+<span class="sd">    :param list ignored_paths: A list of paths to explicitly ignore.</span>
+<span class="sd">    :param list not_ignored: A list of paths to explicitly not ignore.</span>
+
+<span class="sd">    :Returns:</span>
+<span class="sd">        True if there are files to check. False will invoke a early exit (in</span>
+<span class="sd">        [`main()`][python_action.run.main()]) when no files to be checked.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;.gitmodules&quot;</span><span class="p">):</span>
+        <span class="n">submodules</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
+        <span class="n">submodules</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;.gitmodules&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">submodules</span><span class="o">.</span><span class="n">sections</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Apending submodule to ignored paths: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">submodules</span><span class="p">[</span><span class="n">module</span><span class="p">][</span><span class="s2">&quot;path&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">ignored_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">submodules</span><span class="p">[</span><span class="n">module</span><span class="p">][</span><span class="s2">&quot;path&quot;</span><span class="p">])</span>
+
+    <span class="n">root_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">dirpath</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">filenames</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">root_path</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">dirpath</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+            <span class="c1"># logger.debug(&quot;Skipping files in path \&quot;%s\&quot;&quot;, path)</span>
+            <span class="k">continue</span>  <span class="c1"># skip sources in hidden directories</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Crawling &quot;./</span><span class="si">%s</span><span class="s1">&quot;&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">file</span><span class="p">)[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span> <span class="ow">in</span> <span class="n">ext_list</span><span class="p">:</span>
+                <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;&quot;./</span><span class="si">%s</span><span class="s1">&quot; is a source code file&#39;</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">is_file_in_list</span><span class="p">(</span>
+                    <span class="n">ignored_paths</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;ignored&quot;</span>
+                <span class="p">)</span> <span class="ow">or</span> <span class="n">is_file_in_list</span><span class="p">(</span><span class="n">not_ignored</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;not ignored&quot;</span><span class="p">):</span>
+                    <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="n">file_path</span><span class="p">})</span>
+
+    <span class="k">if</span> <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Giving attention to the following files:</span><span class="se">\n\t</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;</span><span class="se">\n\t</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">f</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">]),</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No source files found.&quot;</span><span class="p">)</span>  <span class="c1"># this might need to be warning</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="capture_linters_output"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.capture_linters_output">[docs]</a><span class="k">def</span> <span class="nf">capture_linters_output</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># (diff_only: bool) -&gt; None:</span>
     <span class="sd">&quot;&quot;&quot;Execute and capture all output from clang-tidy and clang-format. This aggregates</span>
 <span class="sd">    results in the :attr:`~python_action.__init__.Globals.OUTPUT`.</span>
 
-<span class="sd">    :param bool diff_only: A flag that forces focus on only changes in the event&#39;s diff</span>
-<span class="sd">        info.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">GITHUB_EVENT_NAME</span> <span class="o">==</span> <span class="s2">&quot;push&quot;</span><span class="p">:</span>
-        <span class="n">diff_only</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># diff comments are not supported for push events</span>
-    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">:</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">]):</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">file</span><span class="p">[</span><span class="s2">&quot;raw_url&quot;</span><span class="p">])[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Performing checkup on </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
-
-        <span class="n">run_pylint</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">diff_only</span><span class="p">)</span></div>
+    <span class="c1"># :param bool diff_only: A flag that forces focus on only changes in the</span>
+    <span class="c1">#     event&#39;s diff info.</span>
+    <span class="n">run_pylint</span><span class="p">(</span>
+        <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">Globals</span><span class="o">.</span><span class="n">FILES</span><span class="p">[</span><span class="s2">&quot;files&quot;</span><span class="p">]</span>
+    <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="post_results"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.post_results">[docs]</a><span class="k">def</span> <span class="nf">post_results</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Post action&#39;s results using REST API.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">GITHUB_TOKEN</span><span class="p">:</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;The GITHUB_TOKEN is required!&quot;</span><span class="p">)</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">set_exit_code</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-
-    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">GITHUB_API_URL</span><span class="si">}</span><span class="s2">/repos/</span><span class="si">{</span><span class="n">GITHUB_REPOSITORY</span><span class="si">}</span><span class="s2">/&quot;</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;checks URL: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">url</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;commits/</span><span class="si">{</span><span class="n">GITHUB_SHA</span><span class="si">}</span><span class="s2">/&quot;</span> <span class="o">+</span> <span class="s2">&quot;check-runs&quot;</span><span class="p">)</span>
-    <span class="n">url</span> <span class="o">+=</span> <span class="s2">&quot;check-runs&quot;</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;check-python-sources&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;head_sha&quot;</span><span class="p">:</span> <span class="n">GITHUB_SHA</span><span class="p">,</span>
-        <span class="s2">&quot;details_url&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">GITHUB_SERVER_URL</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">GITHUB_REPOSITORY</span><span class="si">}</span><span class="s2">/actions/runs/</span><span class="si">{</span><span class="n">GITHUB_RUN_ID</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;external_id&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;GITHUB_ACTION&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-        <span class="s2">&quot;conclusion&quot;</span><span class="p">:</span> <span class="s2">&quot;completed&quot;</span><span class="p">,</span>  <span class="c1"># not required if we don&#39;t timestamp the run</span>
-        <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="p">[],</span>
-    <span class="p">}</span>
-
-    <span class="n">annotations</span> <span class="o">=</span> <span class="p">[]</span>
+<div class="viewcode-block" id="post_results"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.post_results">[docs]</a><span class="k">def</span> <span class="nf">post_results</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Use github log commands to make annotations from pylint output.&quot;&quot;&quot;</span>
+    <span class="c1"># log_commander obj&#39;s verbosity is hard-coded to show debug statements</span>
+    <span class="n">exit_code</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">start_log_group</span><span class="p">(</span><span class="s2">&quot;Posting results&quot;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">GlobalParser</span><span class="o">.</span><span class="n">pylint_notes</span><span class="p">:</span>
+        <span class="n">exit_code</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">for</span> <span class="n">note</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
-            <span class="n">annotations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">annotate_pylint_note</span><span class="p">(</span><span class="n">note</span><span class="p">))</span>
-
-    <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">while</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">annotations</span><span class="p">):</span>
-        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">annotations</span><span class="p">[</span><span class="n">index</span><span class="p">:</span><span class="mi">50</span><span class="p">]</span>
-        <span class="n">check_run_id</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="mi">100</span> <span class="o">&gt;</span> <span class="n">index</span> <span class="o">&gt;=</span> <span class="mi">50</span><span class="p">:</span>
-            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;check_run_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">check_run_id</span>
-            <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;PATCH&quot;</span>
-            <span class="n">url</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">check_run_id</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;payload: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
-        <span class="n">Globals</span><span class="o">.</span><span class="n">response_buffer</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">request</span><span class="p">(</span>
-            <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
-            <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span>
-            <span class="n">headers</span><span class="o">=</span><span class="n">API_HEADERS</span><span class="p">,</span>
-            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">index</span> <span class="o">+=</span> <span class="mi">50</span>
-        <span class="n">json_response</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">Globals</span><span class="o">.</span><span class="n">response_buffer</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;id&quot;</span> <span class="ow">in</span> <span class="n">json_response</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="n">check_run_id</span> <span class="o">=</span> <span class="n">json_response</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Got </span><span class="si">%d</span><span class="s2"> from </span><span class="si">%s</span><span class="s2">ing a checks run </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">Globals</span><span class="o">.</span><span class="n">response_buffer</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
-            <span class="s2">&quot;creat&quot;</span> <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">50</span> <span class="k">else</span> <span class="s2">&quot;updat&quot;</span><span class="p">,</span>
-            <span class="n">check_run_id</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">log_response_msg</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="n">set_exit_code</span><span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">annotations</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span></div>
+            <span class="n">log_commander</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">annotate_pylint_note</span><span class="p">(</span><span class="n">note</span><span class="p">))</span>
+    <span class="n">end_log_group</span><span class="p">()</span>
+    <span class="n">set_exit_code</span><span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">exit_code</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="main"><a class="viewcode-back" href="../../python_action/python_action.run.html#python_action.run.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
@@ -299,10 +364,61 @@
     <span class="c1"># change working directory</span>
     <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">repo_root</span><span class="p">)</span>
 
-    <span class="n">get_list_of_changed_files</span><span class="p">()</span>
-    <span class="n">filter_out_non_source_files</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">extensions</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">diff_only</span><span class="p">)</span>
-    <span class="n">verify_files_are_present</span><span class="p">()</span>
-    <span class="n">capture_linters_output</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">diff_only</span><span class="p">)</span>
+    <span class="c1"># prepare ignored paths list</span>
+    <span class="n">ignored</span><span class="p">,</span> <span class="n">not_ignored</span> <span class="o">=</span> <span class="p">([</span><span class="s2">&quot;__pycache__&quot;</span><span class="p">],</span> <span class="p">[])</span>  <span class="c1"># auto-ignore __pycache__ dir</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">ignore</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">ignore</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">ignore</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">ignore</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;./&quot;</span><span class="p">)</span>  <span class="c1"># relative dir is assumed</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>  <span class="c1"># strip leading/trailing spaces</span>
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">):</span>
+                <span class="n">not_ignored</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ignored</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="c1"># prepare extensions list</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">extensions</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">extensions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+
+    <span class="c1"># load event&#39;s json info about the workflow run</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">GITHUB_EVEN_PATH</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">payload</span><span class="p">:</span>
+        <span class="n">Globals</span><span class="o">.</span><span class="n">EVENT_PAYLOAD</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">logger</span><span class="o">.</span><span class="n">getEffectiveLevel</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
+        <span class="n">start_log_group</span><span class="p">(</span><span class="s2">&quot;Event json from the runner&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">Globals</span><span class="o">.</span><span class="n">EVENT_PAYLOAD</span><span class="p">))</span>
+        <span class="n">end_log_group</span><span class="p">()</span>
+
+    <span class="c1"># change working directory</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">repo_root</span><span class="p">)</span>
+
+    <span class="n">start_log_group</span><span class="p">(</span><span class="s2">&quot;Get list of specified source files&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ignored</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Ignoring the following paths/files:</span><span class="se">\n\t</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;</span><span class="se">\n\t</span><span class="s2">./&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">ignored</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">not_ignored</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Not ignoring the following paths/files:</span><span class="se">\n\t</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;</span><span class="se">\n\t</span><span class="s2">./&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">not_ignored</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="n">exit_early</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">files_changed_only</span><span class="p">:</span>
+        <span class="n">get_list_of_changed_files</span><span class="p">()</span>
+        <span class="n">exit_early</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">filter_out_non_source_files</span><span class="p">(</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">extensions</span><span class="p">,</span>
+            <span class="n">ignored</span><span class="p">,</span>
+            <span class="n">not_ignored</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">lines_changed_only</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">files_changed_only</span> <span class="k">else</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exit_early</span><span class="p">:</span>
+            <span class="n">verify_files_are_present</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">exit_early</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">list_source_files</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">extensions</span><span class="p">,</span> <span class="n">ignored</span><span class="p">,</span> <span class="n">not_ignored</span><span class="p">)</span>
+    <span class="n">end_log_group</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">exit_early</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">set_exit_code</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+
+    <span class="n">capture_linters_output</span><span class="p">()</span>
     <span class="n">post_results</span><span class="p">()</span></div>
 
 

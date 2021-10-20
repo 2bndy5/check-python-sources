@@ -1,7 +1,7 @@
-python\_action.parse\_pylint
+python\_linter.parse\_pylint
 ============================
 
-.. automodule:: python_action.parse_pylint
+.. automodule:: python_linter.parse_pylint
    :members:
 
 

@@ -1,7 +1,7 @@
-python\_action.run
+python\_linter.run
 ==================
 
-.. automodule:: python_action.run
+.. automodule:: python_linter.run
    :members:
 
 

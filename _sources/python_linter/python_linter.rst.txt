@@ -1,7 +1,7 @@
-﻿python\_action
+﻿python\_linter
 ==============
 
-.. automodule:: python_action
+.. automodule:: python_linter
    :members:
 
 
@@ -45,7 +45,7 @@
       :toctree:
       :template: auto_sum_module.rst
    
-      python_action.parse_pylint
-      python_action.run
+      python_linter.parse_pylint
+      python_linter.run
    
    

@@ -12,7 +12,7 @@ if repo is None:
 
 
 setup(
-    name="python_action",
+    name="python_linter",
     # use_scm_version=True,
     # setup_requires=["setuptools_scm"],
     version="v1.0.0",
@@ -30,9 +30,9 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     keywords="pylint black",
-    packages=["python_action"],
+    packages=["python_linter"],
 
-    entry_points={"console_scripts": ["run-action=python_action.run:main"]},
+    entry_points={"console_scripts": ["python-linter=python_linter.run:main"]},
     # Specifiy your homepage URL for your project here
     url=REPO,
     download_url=f"{REPO}/releases",

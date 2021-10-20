@@ -7,11 +7,11 @@
     self
 
 .. autosummary::
-   :toctree: python_action
+   :toctree: python_linter
    :template: auto_sum_module.rst
    :recursive:
 
-   python_action
+   python_linter
 
 Indices and tables
 ==================

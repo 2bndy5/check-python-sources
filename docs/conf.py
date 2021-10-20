@@ -30,11 +30,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    "sphinx.ext.graphviz",
-    "sphinx_copybutton",
     # "rst2pdf.pdfbuilder",  # for local pdf builder support
     "sphinx_immaterial"
 ]
@@ -109,72 +105,6 @@ todo_emit_warnings = False
 
 napoleon_numpy_docstring = False
 
-# pygment custom style
-# --------------------------------------------------
-
-
-# class DarkPlus(Style):
-#     """A custom pygment highlighting scheme based on
-#     VSCode's builtin `Dark Plus` theme"""
-
-#     background_color = "#1E1E1E"
-#     highlight_color = "#ff0000"
-#     line_number_color = "#FCFCFC"
-#     line_number_background_color = "#202020"
-
-#     default_style = ""
-#     styles = {
-#         Text: "#FEFEFE",
-#         Comment.Single: "#5E9955",
-#         Comment.Multiline: "#5E9955",
-#         Comment.Preproc: "#B369BF",
-#         Other: "#FEFEFE",
-#         Keyword: "#499CD6",
-#         Keyword.Declaration: "#C586C0",
-#         Keyword.Namespace: "#B369BF",
-#         # Keyword.Pseudo: "#499CD6",
-#         # Keyword.Reserved: "#499CD6",
-#         Keyword.Type: "#48C999",
-#         Name: "#FEFEFE",
-#         Name.Builtin: "#EAEB82",
-#         Name.Builtin.Pseudo: "#499DC7",
-#         Name.Class: "#48C999",
-#         Name.Decorator: "#EAEB82",
-#         Name.Exception: "#48C999",
-#         Name.Attribute: "#569CD6",
-#         Name.Variable: "#9CDCFE",
-#         Name.Variable.Magic: "#EAEB82",
-#         Name.Function: "#EAEB82",
-#         Name.Function.Magic: "#EAEB82",
-#         Literal: "#AC4C1E",
-#         String: "#B88451",
-#         String.Escape: "#DEA868",
-#         String.Affix: "#499DC7",
-#         Number: "#B3D495",
-#         Operator: "#FEFEFE",
-#         Operator.Word: "#499DC7",
-#         Generic.Output: "#F4DA8B",
-#         Generic.Prompt: "#99FFA2",
-#         Generic.Traceback: "#FF0909",
-#         Generic.Error: "#FF0909",
-#         Punctuation: "#FEFEFE",
-#     }
-
-
-# def pygments_monkeypatch_style(mod_name, cls):
-#     """function to inject a custom pygment style"""
-#     cls_name = cls.__name__
-#     mod = type(__import__("os"))(mod_name)
-#     setattr(mod, cls_name, cls)
-#     setattr(pygments.styles, mod_name, mod)
-#     sys.modules["pygments.styles." + mod_name] = mod
-#     pygments.styles.STYLE_MAP[mod_name] = mod_name + "::" + cls_name
-
-
-# pygments_monkeypatch_style("dark_plus", DarkPlus)
-# # The name of the Pygments (syntax highlighting) style to use.
-# pygments_style = "dark_plus"
-
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -226,6 +156,7 @@ html_theme_options = {
     "globaltoc_collapse": False,
     # If True, show hidden TOC entries
     "globaltoc_includehidden": True,
+    # "edit_uri": "blob/master/docs",
 }
 # Set link name generated in the top bar.
 html_title = "check-python-sources Github Action"
@@ -238,7 +169,7 @@ html_static_path = ["_static"]
 # These paths are either relative to html_static_path
 # or fully qualified paths (eg. https://...)
 # html_css_files = [
-#     "dark_material.css",
+#     "custom_material.css",
 # ]
 
 # The name of an image file (relative to this directory) to use as a favicon of
@@ -260,16 +191,16 @@ htmlhelp_basename = "check_python_sources_action_doc"
 latex_elements = {
     #
     # The paper size ('letterpaper' or 'a4paper').
-    # 'papersize': 'letterpaper',
+    'papersize': 'letterpaper',
     #
     # The font size ('10pt', '11pt' or '12pt').
-    # 'pointsize': '10pt',
+    'pointsize': '12pt',
     #
     # Additional stuff for the LaTeX preamble.
-    # 'preamble': '',
+    'preamble': '',
     #
     # Latex figure (float) alignment
-    # 'figure_align': 'htbp',
+    'figure_align': 'htbp',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples

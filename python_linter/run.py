@@ -1,5 +1,5 @@
 """Run clang-tidy and clang-format on a list of changed files provided by GitHub's
-REST API. If executed from command-line, then [`main()`][python_action.run.main] is
+REST API. If executed from command-line, then [`main()`][python_linter.run.main] is
 the entrypoint.
 
 .. seealso::
@@ -131,7 +131,8 @@ def set_exit_code(override: int = None) -> int:
 
 def get_list_of_changed_files() -> None:
     """Fetch the JSON payload of the event's changed files. Sets the
-    :attr:`~python_action.__init__.Globals.FILES` attribute."""
+    :attr:`~python_linter.__init__.Globals.FILES` attribute."""
+    start_log_group("Get list of specified source files")
     files_link = f"{GITHUB_API_URL}/repos/{GITHUB_REPOSITORY}/"
     if GITHUB_EVENT_NAME == "pull_request":
         files_link += f"pulls/{Globals.EVENT_PAYLOAD['number']}/files"
@@ -148,7 +149,7 @@ def filter_out_non_source_files(
     ext_list: list, ignored: list, not_ignored: list, lines_changed_only: bool
 ) -> bool:
     """Exclude undesired files (specified by user input 'extensions'). This filter
-    applies to the event's :attr:`~python_action.__init__.Globals.FILES` attribute.
+    applies to the event's :attr:`~python_linter.__init__.Globals.FILES` attribute.
 
     :param list ext_list: A `list` of file extensions that should be attended.
     :param list ignored_paths: A list of paths to explicitly ignore.
@@ -249,8 +250,9 @@ def list_source_files(ext_list: list, ignored_paths: list, not_ignored: list) ->
 
     :Returns:
         True if there are files to check. False will invoke a early exit (in
-        [`main()`][python_action.run.main()]) when no files to be checked.
+        [`main()`][python_linter.run.main()]) when no files to be checked.
     """
+    start_log_group("Get list of specified source files")
     if os.path.exists(".gitmodules"):
         submodules = configparser.ConfigParser()
         submodules.read(".gitmodules")
@@ -263,8 +265,14 @@ def list_source_files(ext_list: list, ignored_paths: list, not_ignored: list) ->
     root_path = os.getcwd()
     for dirpath, _, filenames in os.walk(root_path):
         path = dirpath.replace(root_path, "").lstrip(os.sep)
-        if path.startswith("."):
-            # logger.debug("Skipping files in path \"%s\"", path)
+        path_parts = path.split(os.sep)
+        is_hidden = False
+        for part in path_parts:
+            if part.startswith("."):
+                # logger.debug("Skipping \".%s%s\"", os.sep, path)
+                is_hidden = True
+                break
+        if is_hidden:
             continue  # skip sources in hidden directories
         logger.debug('Crawling "./%s"', path)
         for file in filenames:
@@ -289,7 +297,7 @@ def list_source_files(ext_list: list, ignored_paths: list, not_ignored: list) ->
 
 def capture_linters_output() -> None:  # (diff_only: bool) -> None:
     """Execute and capture all output from clang-tidy and clang-format. This aggregates
-    results in the :attr:`~python_action.__init__.Globals.OUTPUT`.
+    results in the :attr:`~python_linter.__init__.Globals.OUTPUT`.
 
     """
     # :param bool diff_only: A flag that forces focus on only changes in the
@@ -339,18 +347,9 @@ def main():
     # prepare extensions list
     args.extensions = args.extensions.split(",")
 
-    # load event's json info about the workflow run
-    with open(GITHUB_EVEN_PATH, "r", encoding="utf-8") as payload:
-        Globals.EVENT_PAYLOAD = json.load(payload)
-    if logger.getEffectiveLevel() <= logging.DEBUG:
-        start_log_group("Event json from the runner")
-        logger.debug(json.dumps(Globals.EVENT_PAYLOAD))
-        end_log_group()
-
     # change working directory
     os.chdir(args.repo_root)
 
-    start_log_group("Get list of specified source files")
     if ignored:
         logger.info(
             "Ignoring the following paths/files:\n\t%s",
@@ -363,6 +362,13 @@ def main():
         )
     exit_early = False
     if args.files_changed_only:
+        # load event's json info about the workflow run
+        with open(GITHUB_EVEN_PATH, "r", encoding="utf-8") as payload:
+            Globals.EVENT_PAYLOAD = json.load(payload)
+        if logger.getEffectiveLevel() <= logging.DEBUG:
+            start_log_group("Event json from the runner")
+            logger.debug(json.dumps(Globals.EVENT_PAYLOAD))
+            end_log_group()
         get_list_of_changed_files()
         exit_early = not filter_out_non_source_files(
             args.extensions,

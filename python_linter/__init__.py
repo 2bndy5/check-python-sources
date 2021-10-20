@@ -1,4 +1,4 @@
-"""The Base module of the :mod:`python_action` package. This holds the objects shared by
+"""The Base module of the :mod:`python_linter` package. This holds the objects shared by
 multiple modules."""
 import io
 import os

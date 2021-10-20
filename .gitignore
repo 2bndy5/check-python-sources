@@ -116,5 +116,5 @@ dmypy.json
 # project specific
 .changed_files.json
 event_payload.json
-docs/python_action/
+docs/python_linter/
 .vscode/

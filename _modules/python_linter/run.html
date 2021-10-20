@@ -977,11 +977,14 @@
     <span class="sd">&quot;&quot;&quot;Use github log commands to make annotations from pylint output.&quot;&quot;&quot;</span>
     <span class="c1"># log_commander obj&#39;s verbosity is hard-coded to show debug statements</span>
     <span class="n">exit_code</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">start_log_group</span><span class="p">(</span><span class="s2">&quot;Posting results&quot;</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">GlobalParser</span><span class="o">.</span><span class="n">pylint_notes</span><span class="p">:</span>
         <span class="n">exit_code</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">for</span> <span class="n">note</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">log_commander</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">annotate_pylint_note</span><span class="p">(</span><span class="n">note</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Created </span><span class="si">%d</span><span class="s2"> annotations&quot;</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
     <span class="n">end_log_group</span><span class="p">()</span>
     <span class="n">set_exit_code</span><span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">exit_code</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span></div>
 

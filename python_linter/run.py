@@ -311,11 +311,14 @@ def post_results() -> None:
     """Use github log commands to make annotations from pylint output."""
     # log_commander obj's verbosity is hard-coded to show debug statements
     exit_code = False
+    count = 0
     start_log_group("Posting results")
     for result in GlobalParser.pylint_notes:
         exit_code = True
         for note in result:
+            count += 1
             log_commander.info(annotate_pylint_note(note))
+        logger.info("Created %d annotations", count)
     end_log_group()
     set_exit_code(1 if exit_code else 0)
 

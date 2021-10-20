@@ -53,5 +53,4 @@ runs:
     - --repo-root=${{ inputs.repo-root }}
     - --verbosity=${{ inputs.verbosity }}
     - --files-changed-only=${{ inputs.files-changed-only }}
-    - --ignore
-    - ${{ inputs.ignore }}
+    - --ignore=${{ inputs.ignore }}

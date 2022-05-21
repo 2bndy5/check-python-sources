@@ -1,6 +1,19 @@
 ﻿python\_linter
 ==============
 
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: auto_sum_module.rst
+
+   python_linter.parse_pylint
+   python_linter.run
+
+
+
 .. automodule:: python_linter
    :members:
 
@@ -34,18 +47,5 @@
    
 
    
-   
-   
-
-   
-   
-   .. rubric:: Modules
-
-   .. autosummary::
-      :toctree:
-      :template: auto_sum_module.rst
-   
-      python_linter.parse_pylint
-      python_linter.run
    
    

@@ -1,6 +1,10 @@
 python\_linter.parse\_pylint
 ============================
 
+
+
+
+
 .. automodule:: python_linter.parse_pylint
    :members:
 
@@ -17,10 +21,6 @@ python\_linter.parse\_pylint
    
       annotate_pylint_note
       run_pylint
-   
-   
-
-   
    
    
 

@@ -6,6 +6,9 @@
 
     self
 
+API Reference
+*************
+
 .. autosummary::
    :toctree: python_linter
    :template: auto_sum_module.rst

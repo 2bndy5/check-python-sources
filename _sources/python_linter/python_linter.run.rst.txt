@@ -1,6 +1,10 @@
 python\_linter.run
 ==================
 
+
+
+
+
 .. automodule:: python_linter.run
    :members:
 
@@ -24,10 +28,6 @@ python\_linter.run
       post_results
       set_exit_code
       verify_files_are_present
-   
-   
-
-   
    
    
 

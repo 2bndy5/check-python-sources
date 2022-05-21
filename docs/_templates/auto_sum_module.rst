@@ -1,5 +1,18 @@
 {{ fullname | escape | underline}}
 
+{% block modules %}
+{% if modules %}
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: auto_sum_module.rst
+{% for item in modules %}
+   {{ item }}
+{%- endfor %}
+{% endif %}
+{% endblock %}
+
 .. automodule:: {{ fullname }}
    :members:
 
@@ -43,19 +56,6 @@
 
    .. autosummary::
    {% for item in exceptions %}
-      {{ item }}
-   {%- endfor %}
-   {% endif %}
-   {% endblock %}
-
-   {% block modules %}
-   {% if modules %}
-   .. rubric:: Modules
-
-   .. autosummary::
-      :toctree:
-      :template: auto_sum_module.rst
-   {% for item in modules %}
       {{ item }}
    {%- endfor %}
    {% endif %}

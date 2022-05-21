@@ -152,7 +152,7 @@ def filter_out_non_source_files(
     applies to the event's :attr:`~python_linter.__init__.Globals.FILES` attribute.
 
     :param list ext_list: A `list` of file extensions that should be attended.
-    :param list ignored_paths: A list of paths to explicitly ignore.
+    :param list ignored: A list of paths to explicitly ignore.
     :param list not_ignored: A list of paths to explicitly not ignore.
     :param bool lines_changed_only: A flag that forces focus on only changes in the
         event's diff info.
@@ -242,7 +242,7 @@ def verify_files_are_present() -> None:
 
 def list_source_files(ext_list: list, ignored_paths: list, not_ignored: list) -> bool:
     """Make a list of source files to be checked. The resulting list is stored in
-    [`FILES`][Global.FILES].
+    `FILES`.
 
     :param list ext_list: A `list` of file extensions that should be attended.
     :param list ignored_paths: A list of paths to explicitly ignore.
@@ -250,7 +250,7 @@ def list_source_files(ext_list: list, ignored_paths: list, not_ignored: list) ->
 
     :Returns:
         True if there are files to check. False will invoke a early exit (in
-        [`main()`][python_linter.run.main()]) when no files to be checked.
+        `main()`) when no files to be checked.
     """
     start_log_group("Get list of specified source files")
     if os.path.exists(".gitmodules"):

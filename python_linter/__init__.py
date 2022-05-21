@@ -18,7 +18,7 @@ try:
 except ImportError:
     logging.basicConfig()
 
-#: The logging.Logger object used for outputing data.
+#: The logging.Logger object used for outputting data.
 logger = logging.getLogger("Python Checker")
 if not FOUND_RICH_LIB:
     logger.debug("rich module not found")
@@ -35,7 +35,7 @@ log_commander.propagate = False  # prevent duplicate messages in the parent logg
 class Globals:
     """Global variables for re-use (non-constant)."""
 
-    #: The reponding payload containing info about changed files.
+    #: The responding payload containing info about changed files.
     FILES = []
     #: The parsed JSON of the event payload.
     EVENT_PAYLOAD = {}
@@ -55,16 +55,16 @@ class GlobalParser:
 
 
 def start_log_group(name: str) -> None:
-    """Begin a callapsable group of log statements.
+    """Begin a collapsable group of log statements.
 
-    Argrs:
-        name: The name of the callapsable group
+    Args:
+        name: The name of the collapsable group
     """
     log_commander.fatal("::group::%s", name)
 
 
 def end_log_group() -> None:
-    """End a callapsable group of log statements."""
+    """End a collapsable group of log statements."""
     log_commander.fatal("::endgroup::")
 
 

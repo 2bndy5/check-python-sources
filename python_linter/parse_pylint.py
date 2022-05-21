@@ -1,10 +1,11 @@
 """Parse output from clang-tidy's stdout"""
 import subprocess
 import json
+from typing import Dict, Union
 from . import GlobalParser, logger, log_commander, end_log_group, start_log_group
 
 
-def annotate_pylint_note(obj: dict) -> str:
+def annotate_pylint_note(obj: Dict[str, Union[int, str]]) -> str:
     """Translate a 1 notification from pylint to github's checks API.
 
     :param dict obj: The JSON object output by pylint (for 1 notification).

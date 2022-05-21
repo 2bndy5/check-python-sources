@@ -79,20 +79,20 @@ cli_arg_parser.add_argument(
     "--lines-changed-only",
     default="false",
     type=lambda input: input.lower() == "true",
-    help="Set this option to 'true' to only analyse changes in the event's diff. "
+    help="Set this option to 'true' to only analyze changes in the event's diff. "
     "Defaults to %(default)s.",
 )
 cli_arg_parser.add_argument(
     "--files-changed-only",
     default="true",
     type=lambda input: input.lower() == "true",
-    help="Set this option to 'false' to analyse any source files in the repo. "
+    help="Set this option to 'false' to analyze any source files in the repo. "
     "Defaults to %(default)s.",
 )
 
 
 def is_file_in_list(paths: list, file_name: str, prompt: str) -> bool:
-    """Detirmine if a file is specified in a list of paths and/or filenames.
+    """Determine if a file is specified in a list of paths and/or filenames.
 
     :param list paths: A list of specified paths to compare with. This list can contain
         a specified file, but the file's path must be included as part of the filename.
@@ -258,7 +258,7 @@ def list_source_files(ext_list: list, ignored_paths: list, not_ignored: list) ->
         submodules.read(".gitmodules")
         for module in submodules.sections():
             logger.info(
-                "Apending submodule to ignored paths: %s", submodules[module]["path"]
+                "Appending submodule to ignored paths: %s", submodules[module]["path"]
             )
             ignored_paths.append(submodules[module]["path"])
 
